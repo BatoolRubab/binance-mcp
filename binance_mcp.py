@@ -1,22 +1,30 @@
-from mcp.server.fastmcp import FastMCP
 from typing import Any
-import requests
 
-mcp = FastMCP("Binance MCP")
+import requests
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("Binance MCP", port=8897)
+
 
 def get_symbol_from_name(name: str) -> str:
-    name = name.strip().lower()  # Clean input (e.g. remove \n or spaces)
-    if name in ["bitcoin", "btc"]:
+    if name.lower() in ["bitcoin", "btc"]:
         return "BTCUSDT"
-    elif name in ["ethereum", "eth"]:
+    elif name.lower() in ["ethereum", "eth"]:
         return "ETHUSDT"
     else:
-        return name.upper()  # Assume user gives correct Binance symbol
+        return name.upper()
+
 
 @mcp.tool()
 def get_price(symbol: str) -> Any:
     """
     Get the current price of a crypto asset from Binance
+
+    Args:
+        symbol (str): The symbol of the crypto asset to get the price of
+
+    Returns:
+        Any: The current price of the crypto asset
     """
     symbol = get_symbol_from_name(symbol)
     url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
@@ -24,10 +32,17 @@ def get_price(symbol: str) -> Any:
     response.raise_for_status()
     return response.json()
 
+
 @mcp.tool()
 def get_price_price_change(symbol: str) -> Any:
     """
-    Get the 24h price change of a crypto asset from Binance
+    Get the price change of the last 24 hours of a crypto asset from Binance
+
+    Args:
+        symbol (str): The symbol of the crypto asset to get the price change of
+
+    Returns:
+        Any: The price change of the crypto asset in the last 24 hours
     """
     symbol = get_symbol_from_name(symbol)
     url = f"https://data-api.binance.vision/api/v3/ticker/24hr?symbol={symbol}"
@@ -35,6 +50,14 @@ def get_price_price_change(symbol: str) -> Any:
     response.raise_for_status()
     return response.json()
 
+
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    # Access the MCP via the stdio protocol
+    # mcp.run(transport="stdio")
+
+    # Access the MCP via the SSE protocol thourgh <<server_url>>/sse
+    mcp.run(transport="sse")
+
+    # Access the MCP via the Streamable HTTP protocol thourgh <<server_url>>/streamable-http
+    # mcp.run(transport="streamable-http")
 
